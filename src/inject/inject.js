@@ -17,12 +17,43 @@ function init() {
     renderNavIcon(todos);
   });
 
-  chrome.storage.sync.get('todos', items => {
-    const todos = items.todos || [];
+  let currentUrl = null;
+  let state = 0;
 
-    renderButton(todos);
-    renderNavIcon(todos);
-  });
+  setInterval(() => {
+    switch (state) {
+      case 0:
+        if (currentUrl !== location.href) {
+          currentUrl = location.href;
+
+          if (/\/(pull|issues)\/\d+$/.exec(currentUrl)) {
+            state = 1;
+          }
+        }
+        break;
+      case 1:
+        if (!document.querySelector('.button-toggle-todo')) {
+          state = 2;
+        }
+        break;
+      case 2:
+        if (document.querySelector('#partial-users-participants')) {
+          state = 3;
+        }
+        break;
+
+      case 3:
+        chrome.storage.sync.get('todos', items => {
+          const todos = items.todos || [];
+
+          renderButton(todos);
+          renderNavIcon(todos);
+        });
+
+        state = 0;
+        break;
+    }
+  }, 100);
 }
 
 function renderButton(todos) {

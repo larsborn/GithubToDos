@@ -22,7 +22,7 @@
   "content_scripts": [
     {
       "matches": [
-        "https://www.google.com/*"
+        "https://github.com/*"
       ],
       "css": [
         "src/inject/inject.css"
@@ -30,7 +30,7 @@
     },
     {
       "matches": [
-        "https://www.google.com/*"
+        "https://github.com/*"
       ],
       "js": [
         "src/inject/inject.js"

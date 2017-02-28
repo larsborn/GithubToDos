@@ -8,8 +8,6 @@ chrome.extension.sendMessage({}, function (response) {
 });
 
 function init() {
-  console.log('init');
-
   chrome.storage.onChanged.addListener(changes => {
     const todos = changes['todos'].newValue || [];
 
@@ -17,7 +15,7 @@ function init() {
     renderNavIcon(todos);
   });
 
-  let currentUrl = null;
+  let currentUrl = location.href;
   let state = 0;
 
   setInterval(() => {
@@ -44,16 +42,20 @@ function init() {
 
       case 3:
         chrome.storage.sync.get('todos', items => {
-          const todos = items.todos || [];
-
-          renderButton(todos);
-          renderNavIcon(todos);
+          renderButton(items.todos || []);
         });
 
         state = 0;
         break;
     }
   }, 100);
+
+  chrome.storage.sync.get('todos', items => {
+    const todos = items.todos || [];
+
+    renderButton(todos);
+    renderNavIcon(todos);
+  });
 }
 
 function renderButton(todos) {
@@ -79,19 +81,11 @@ function renderButton(todos) {
     h3.classList.add('discussion-sidebar-heading');
     h3.innerHTML = 'ToDos';
 
-    const p = document.createElement('p');
-    p.classList.add('reason', 'text-small', 'text-gray');
-    p.innerHTML = `
-      By clicking this button, you can add the URL to your browser\'s local storage and access it through the ToDo list 
-      icon in the navigation bar.
-`;
-
     const outerDiv = document.createElement('div');
     outerDiv.classList.add('discussion-sidebar-item');
     outerDiv.classList.add('sidebar-notifications');
     outerDiv.appendChild(h3);
     outerDiv.appendChild(buttonDiv);
-    outerDiv.appendChild(p);
     sidebar.insertBefore(outerDiv, document.getElementById('partial-users-participants'));
   }
 

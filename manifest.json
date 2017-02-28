@@ -1,9 +1,9 @@
 {
   "name": "GithubToDos",
-  "version": "0.0.1",
+  "version": "0.1",
   "manifest_version": 2,
-  "description": "This extension was created with the awesome extensionizr.com",
-  "homepage_url": "http://extensionizr.com",
+  "description": "Github ToDos",
+  "homepage_url": "https://github.com/larsborn/GithubToDos",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",

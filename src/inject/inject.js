@@ -16,6 +16,10 @@ function init() {
 function renderButton() {
   const sidebar = document.querySelector('.discussion-sidebar-item.sidebar-notifications');
 
+  if (!sidebar) {
+    return;
+  }
+
   const div = document.createElement('div');
   div.className = 'thread-subscription-status';
   div.style.paddingTop = '1em';
@@ -40,19 +44,21 @@ function renderNavIcon() {
     return;
   }
 
-  const html = `
-    <a href="/notifications" aria-label="You have unread notifications" class="header-nav-link notification-indicator tooltipped tooltipped-s js-socket-channel js-notification-indicator" data-channel="tenant:1:notification-changed:470138" data-ga-click="Header, go to notifications, icon:unread" data-hotkey="g n">
-        <span class="mail-status unread"></span>
-        ${getSvg()}
-    </a>
-  `;
+  chrome.storage.sync.get('todos', items => {
+    const html = `
+      <a href="/notifications" aria-label="You have unread notifications" class="header-nav-link notification-indicator tooltipped tooltipped-s js-socket-channel js-notification-indicator" data-channel="tenant:1:notification-changed:470138" data-ga-click="Header, go to notifications, icon:unread" data-hotkey="g n">
+          ${'<span class="mail-status unread"></span>'}
+          ${getSvg()}
+      </a>
+    `;
 
-  const navItem = document.createElement('li');
-  navItem.classList.add('header-nav-item');
-  navItem.innerHTML = html;
-  navItem.onclick = handleClick;
+    const navItem = document.createElement('li');
+    navItem.classList.add('header-nav-item');
+    navItem.innerHTML = html;
+    navItem.onclick = handleClick;
 
-  nav.insertBefore(navItem, nav.childNodes[0]);
+    nav.insertBefore(navItem, nav.childNodes[0]);
+  });
 }
 
 function getSvg() {

@@ -9,6 +9,12 @@ chrome.extension.sendMessage({}, function (response) {
 
 function init() {
   console.log('init');
+
+  chrome.storage.onChanged.addListener(function () {
+    renderButton();
+    renderNavIcon();
+  });
+
   renderButton();
   renderNavIcon();
 }
@@ -20,21 +26,33 @@ function renderButton() {
     return;
   }
 
-  const div = document.createElement('div');
-  div.className = 'thread-subscription-status';
-  div.style.paddingTop = '1em';
+  let button = document.querySelector('.button-toggle-todo');
 
-  const svg = document.createElement('svg');
-  svg.className = 'octicon octicon-checklist';
+  if (!button) {
+    const div = document.createElement('div');
+    div.classList.add('thread-subscription-status');
+    div.classList.add('thread-todo-status');
+    div.style.paddingTop = '1em';
 
-  const button = document.createElement('button');
-  button.className = 'btn btn-sm';
+    button = document.createElement('button');
+    button.classList.add('btn', 'btn-sm', 'button-toggle-todo');
+    button.onclick = toggleTodo;
 
-  button.innerHTML = getSvg() + ' Add ToDo';
-  button.onclick = handleClick;
+    div.appendChild(button);
+    sidebar.appendChild(div);
+  }
 
-  div.appendChild(button);
-  sidebar.appendChild(div);
+  chrome.storage.sync.get('todos', items => {
+    const todos = items.todos || [];
+    const url = location.href;
+    const index = todos.indexOf(url);
+
+    if (index === -1) {
+      button.innerHTML = getSvg() + ' Add ToDo';
+    } else {
+      button.innerHTML = getSvg() + ' Remove ToDo';
+    }
+  });
 }
 
 function renderNavIcon() {
@@ -76,21 +94,27 @@ function getSvg() {
 }
 
 function handleClick() {
+  
+}
+
+function toggleTodo() {
   chrome.storage.sync.get('todos', items => {
     const todos = items.todos || [];
     const url = location.href;
     console.log(items);
     console.log(todos);
 
-    if (todos.indexOf(url) === -1) {
+    const index = todos.indexOf(url);
+
+    if (index === -1) {
       todos.push(url);
-
-      chrome.storage.sync.set({
-        'todos': todos
-      });
     } else {
-
+      todos.splice(index, 1);
     }
+
+    chrome.storage.sync.set({
+      'todos': todos
+    });
 
     console.log(todos);
   });

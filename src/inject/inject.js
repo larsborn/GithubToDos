@@ -68,7 +68,7 @@ function renderNavIcon() {
     navItem = document.createElement('li');
     navItem.classList.add('header-nav-item');
     navItem.classList.add('header-nav-item-todo');
-    navItem.onclick = handleClick;
+    navItem.onclick = toggleLayer;
     nav.insertBefore(navItem, nav.childNodes[0]);
   }
 
@@ -91,6 +91,66 @@ function getSvg() {
         <path fill-rule="evenodd" d="M16 8.5l-6 6-3-3L8.5 10l1.5 1.5L14.5 7 16 8.5zM5.7 12.2l.8.8H2c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h7c.55 0 1 .45 1 1v6.5l-.8-.8c-.39-.39-1.03-.39-1.42 0L5.7 10.8a.996.996 0 0 0 0 1.41v-.01zM4 4h5V3H4v1zm0 2h5V5H4v1zm0 2h3V7H4v1zM3 9H2v1h1V9zm0-2H2v1h1V7zm0-2H2v1h1V5zm0-2H2v1h1V3z"></path>
      </svg>
   `;
+}
+
+function renderLayer() {
+  const header = document.querySelector('.header');
+  const layer = document.createElement('div');
+  let ul = null;
+  layer.id = 'GithubToDo';
+  layer.style.position = 'absolute';
+  layer.style.top = '54px';
+  layer.style.backgroundColor = '#24292e';
+  layer.style.zIndex = 999;
+  layer.style.right = 0;
+  layer.style.width = '100%';
+  chrome.storage.onChanged.addListener(function (changes, namespace) {
+    if (ul) ul.parentNode.removeChild(ul);
+    ul = renderLayerList(changes['todos'].newValue);
+    layer.appendChild(ul);
+  });
+  chrome.storage.sync.get('todos', items => {
+    ul = renderLayerList(items.todos || []);
+    layer.appendChild(ul);
+  });
+  header.appendChild(layer);
+}
+
+function renderLayerList(todos) {
+  const ul = document.createElement('ul');
+  todos.map(function (todo) {
+    const li = document.createElement('li');
+    const removeBtn = document.createElement('button');
+    removeBtn.onclick = () => {
+      chrome.storage.sync.get('todos', items => {
+        const todos = items.todos || [];
+        const pos = todos.indexOf(todo);
+        if (pos != -1) {
+          todos.splice(pos, 1);
+          chrome.storage.sync.set({
+            'todos': todos
+          });
+        }
+      });
+    };
+    removeBtn.innerHTML = 'Done';
+    const a = document.createElement('a');
+    a.innerHTML = a.href = todo;
+    li.appendChild(a);
+    li.appendChild(removeBtn);
+    ul.appendChild(li)
+  });
+  return ul;
+}
+
+function toggleLayer() {
+  let layer = document.getElementById('GithubToDo');
+  if (layer) {
+    layer.parentNode.removeChild(layer);
+  }
+  else {
+    renderLayer();
+  }
 }
 
 function handleClick() {

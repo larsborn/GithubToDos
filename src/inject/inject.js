@@ -60,7 +60,7 @@ function renderButton(todos) {
 
 function renderNavIcon(todos) {
   const nav = document.querySelector('.header-nav.user-nav');
-
+  let layer = null;
   if (!nav) {
     return;
   }
@@ -71,7 +71,14 @@ function renderNavIcon(todos) {
     navItem = document.createElement('li');
     navItem.classList.add('header-nav-item');
     navItem.classList.add('header-nav-item-todo');
-    navItem.onclick = toggleLayer;
+    navItem.onclick = (e) => {
+      if (layer) {
+        layer.parentNode.removeChild(layer);
+        layer = null;
+      }
+      else layer = renderLayer();
+      e.preventDefault();
+    };
     nav.insertBefore(navItem, nav.childNodes[0]);
   }
 
@@ -82,31 +89,40 @@ function renderNavIcon(todos) {
         ${getSvg()}
     </a>
   `;
-
 }
 
 
 function renderLayer() {
   const header = document.querySelector('.header');
   const layer = document.createElement('div');
-  let ul = null;
-  layer.id = 'GithubToDo';
-  layer.style.position = 'absolute';
-  layer.style.top = '54px';
-  layer.style.backgroundColor = '#24292e';
-  layer.style.zIndex = 999;
-  layer.style.right = 0;
-  layer.style.width = '100%';
+  let content = null;
+  layer.style = {
+    'position': 'absolute',
+    'top': '54px',
+    'backgroundColor': '#24292e',
+    'zIndex': 999,
+    'padding': '0.3em',
+    'width': '100%'
+  };
   chrome.storage.onChanged.addListener(function (changes, namespace) {
-    if (ul) ul.parentNode.removeChild(ul);
-    ul = renderLayerList(changes['todos'].newValue);
-    layer.appendChild(ul);
+    if (content) content.parentNode.removeChild(content);
+    content = renderLayerList(changes['todos'].newValue);
+    layer.appendChild(content);
   });
   chrome.storage.sync.get('todos', items => {
-    ul = renderLayerList(items.todos || []);
-    layer.appendChild(ul);
+    const todos = items.todos || [];
+    if (todos.length === 0) {
+      content = document.createElement('p');
+      content.innerHTML = 'No ToDos.'
+    }
+    else {
+      content = renderLayerList(todos);
+    }
+    layer.appendChild(content);
   });
   header.appendChild(layer);
+
+  return layer;
 }
 
 function renderLayerList(todos) {
@@ -126,24 +142,21 @@ function renderLayerList(todos) {
         }
       });
     };
+    removeBtn.classList.add('btn');
+    removeBtn.classList.add('btn-sm');
     removeBtn.innerHTML = 'Done';
+
     const a = document.createElement('a');
-    a.innerHTML = a.href = todo;
-    li.appendChild(a);
+    a.style.paddingLeft = '0.5em';
+    a.href = todo;
+    a.innerHTML = todo.replace('https://github.com/', '');
+
     li.appendChild(removeBtn);
+    li.appendChild(a);
+    li.style.padding = '0.2em';
     ul.appendChild(li)
   });
   return ul;
-}
-
-function toggleLayer() {
-  let layer = document.getElementById('GithubToDo');
-  if (layer) {
-    layer.parentNode.removeChild(layer);
-  }
-  else {
-    renderLayer();
-  }
 }
 
 function toggleTodo() {

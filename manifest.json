@@ -17,6 +17,7 @@
     "persistent": true
   },
   "permissions": [
+    "storage",
     "https://github.com/*"
   ],
   "content_scripts": [

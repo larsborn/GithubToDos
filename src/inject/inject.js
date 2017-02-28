@@ -10,16 +10,22 @@ chrome.extension.sendMessage({}, function (response) {
 function init() {
   console.log('init');
 
-  chrome.storage.onChanged.addListener(function () {
-    renderButton();
-    renderNavIcon();
+  chrome.storage.onChanged.addListener(changes => {
+    const todos = changes['todos'].newValue || [];
+
+    renderButton(todos);
+    renderNavIcon(todos);
   });
 
-  renderButton();
-  renderNavIcon();
+  chrome.storage.sync.get('todos', items => {
+    const todos = items.todos || [];
+
+    renderButton(todos);
+    renderNavIcon(todos);
+  });
 }
 
-function renderButton() {
+function renderButton(todos) {
   const sidebar = document.querySelector('.discussion-sidebar-item.sidebar-notifications');
 
   if (!sidebar) {
@@ -42,20 +48,17 @@ function renderButton() {
     sidebar.appendChild(div);
   }
 
-  chrome.storage.sync.get('todos', items => {
-    const todos = items.todos || [];
-    const url = location.href;
-    const index = todos.indexOf(url);
+  const url = location.href;
+  const index = todos.indexOf(url);
 
-    if (index === -1) {
-      button.innerHTML = getSvg() + ' Add ToDo';
-    } else {
-      button.innerHTML = getSvg() + ' Remove ToDo';
-    }
-  });
+  if (index === -1) {
+    button.innerHTML = getSvg() + ' Add ToDo';
+  } else {
+    button.innerHTML = getSvg() + ' Remove ToDo';
+  }
 }
 
-function renderNavIcon() {
+function renderNavIcon(todos) {
   const nav = document.querySelector('.header-nav.user-nav');
 
   if (!nav) {
@@ -72,26 +75,16 @@ function renderNavIcon() {
     nav.insertBefore(navItem, nav.childNodes[0]);
   }
 
-  chrome.storage.sync.get('todos', items => {
-    const todos = items.todos || [];
-
-    navItem.innerHTML = `
-      <a href="#todos" 
-        class="header-nav-link notification-indicator tooltipped tooltipped-s js-notification-indicator">
-          ${todos.length > 0 ? '<span class="mail-status unread"></span>' : ''}
-          ${getSvg()}
-      </a>
-    `;
-  });
-}
-
-function getSvg() {
-  return `
-    <svg class="octicon octicon-checklist" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
-        <path fill-rule="evenodd" d="M16 8.5l-6 6-3-3L8.5 10l1.5 1.5L14.5 7 16 8.5zM5.7 12.2l.8.8H2c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h7c.55 0 1 .45 1 1v6.5l-.8-.8c-.39-.39-1.03-.39-1.42 0L5.7 10.8a.996.996 0 0 0 0 1.41v-.01zM4 4h5V3H4v1zm0 2h5V5H4v1zm0 2h3V7H4v1zM3 9H2v1h1V9zm0-2H2v1h1V7zm0-2H2v1h1V5zm0-2H2v1h1V3z"></path>
-     </svg>
+  navItem.innerHTML = `
+    <a href="#todos" 
+      class="header-nav-link notification-indicator tooltipped tooltipped-s js-notification-indicator">
+        ${todos.length > 0 ? '<span class="mail-status unread"></span>' : ''}
+        ${getSvg()}
+    </a>
   `;
+
 }
+
 
 function renderLayer() {
   const header = document.querySelector('.header');
@@ -153,10 +146,6 @@ function toggleLayer() {
   }
 }
 
-function handleClick() {
-  
-}
-
 function toggleTodo() {
   chrome.storage.sync.get('todos', items => {
     const todos = items.todos || [];
@@ -180,4 +169,10 @@ function toggleTodo() {
   });
 }
 
-
+function getSvg() {
+  return `
+    <svg class="octicon octicon-checklist" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true">
+        <path fill-rule="evenodd" d="M16 8.5l-6 6-3-3L8.5 10l1.5 1.5L14.5 7 16 8.5zM5.7 12.2l.8.8H2c-.55 0-1-.45-1-1V3c0-.55.45-1 1-1h7c.55 0 1 .45 1 1v6.5l-.8-.8c-.39-.39-1.03-.39-1.42 0L5.7 10.8a.996.996 0 0 0 0 1.41v-.01zM4 4h5V3H4v1zm0 2h5V5H4v1zm0 2h3V7H4v1zM3 9H2v1h1V9zm0-2H2v1h1V7zm0-2H2v1h1V5zm0-2H2v1h1V3z"></path>
+     </svg>
+  `;
+}

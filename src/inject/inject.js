@@ -44,20 +44,26 @@ function renderNavIcon() {
     return;
   }
 
+  let navItem = document.querySelector('.header-nav-item-todo');
+
+  if (!navItem) {
+    navItem = document.createElement('li');
+    navItem.classList.add('header-nav-item');
+    navItem.classList.add('header-nav-item-todo');
+    navItem.onclick = handleClick;
+    nav.insertBefore(navItem, nav.childNodes[0]);
+  }
+
   chrome.storage.sync.get('todos', items => {
-    const html = `
-      <a href="/notifications" aria-label="You have unread notifications" class="header-nav-link notification-indicator tooltipped tooltipped-s js-socket-channel js-notification-indicator" data-channel="tenant:1:notification-changed:470138" data-ga-click="Header, go to notifications, icon:unread" data-hotkey="g n">
-          ${'<span class="mail-status unread"></span>'}
+    const todos = items.todos || [];
+
+    navItem.innerHTML = `
+      <a href="#todos" 
+        class="header-nav-link notification-indicator tooltipped tooltipped-s js-notification-indicator">
+          ${todos.length > 0 ? '<span class="mail-status unread"></span>' : ''}
           ${getSvg()}
       </a>
     `;
-
-    const navItem = document.createElement('li');
-    navItem.classList.add('header-nav-item');
-    navItem.innerHTML = html;
-    navItem.onclick = handleClick;
-
-    nav.insertBefore(navItem, nav.childNodes[0]);
   });
 }
 
@@ -82,8 +88,12 @@ function handleClick() {
       chrome.storage.sync.set({
         'todos': todos
       });
+    } else {
+
     }
 
     console.log(todos);
   });
 }
+
+

@@ -26,7 +26,7 @@ function init() {
 }
 
 function renderButton(todos) {
-  const sidebar = document.querySelector('.discussion-sidebar-item.sidebar-notifications');
+  const sidebar = document.querySelector('#partial-discussion-sidebar');
 
   if (!sidebar) {
     return;
@@ -35,27 +35,39 @@ function renderButton(todos) {
   let button = document.querySelector('.button-toggle-todo');
 
   if (!button) {
-    const div = document.createElement('div');
-    div.classList.add('thread-subscription-status');
-    div.classList.add('thread-todo-status');
-    div.style.paddingTop = '1em';
+    const buttonDiv = document.createElement('div');
+    buttonDiv.classList.add('thread-subscription-status', 'thread-todo-status');
 
     button = document.createElement('button');
     button.classList.add('btn', 'btn-sm', 'button-toggle-todo');
     button.onclick = toggleTodo;
 
-    div.appendChild(button);
-    sidebar.appendChild(div);
+    buttonDiv.appendChild(button);
+
+    const h3 = document.createElement('h3');
+    h3.classList.add('discussion-sidebar-heading');
+    h3.innerHTML = 'ToDos';
+
+    const p = document.createElement('p');
+    p.classList.add('reason', 'text-small', 'text-gray');
+    p.innerHTML = `
+      By clicking this button, you can add the URL to your browser\'s local storage and access it through the ToDo list 
+      icon in the navigation bar.
+`;
+
+    const outerDiv = document.createElement('div');
+    outerDiv.classList.add('discussion-sidebar-item');
+    outerDiv.classList.add('sidebar-notifications');
+    outerDiv.appendChild(h3);
+    outerDiv.appendChild(buttonDiv);
+    outerDiv.appendChild(p);
+    sidebar.insertBefore(outerDiv, document.getElementById('partial-users-participants'));
   }
 
   const url = location.href;
   const index = todos.indexOf(url);
 
-  if (index === -1) {
-    button.innerHTML = getSvg() + ' Add ToDo';
-  } else {
-    button.innerHTML = getSvg() + ' Remove ToDo';
-  }
+  button.innerHTML = getSvg() + (index === -1 ? ' Add ToDo' : ' Remove ToDo');
 }
 
 function renderNavIcon(todos) {
@@ -163,9 +175,6 @@ function toggleTodo() {
   chrome.storage.sync.get('todos', items => {
     const todos = items.todos || [];
     const url = location.href;
-    console.log(items);
-    console.log(todos);
-
     const index = todos.indexOf(url);
 
     if (index === -1) {
@@ -177,8 +186,6 @@ function toggleTodo() {
     chrome.storage.sync.set({
       'todos': todos
     });
-
-    console.log(todos);
   });
 }
 

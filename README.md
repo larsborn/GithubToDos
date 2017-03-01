@@ -4,7 +4,7 @@ This Chrome extension enables you to persist ToDos to a list, that is not as vol
 Github. It only uses the local storage of your browser (which, at least in theory, should also sync through the Google 
 cloud to your other devices).
 
-**Warning:** This Software is in version 0.x and my spontaneously catch fire (and burn your marked ToDos in the process, 
+**Warning:** This Software is in version 0.x and might spontaneously catch fire (and burn your marked ToDos in the process, 
 it should most probably not destroy your computer). 
 
 ## Installation

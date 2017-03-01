@@ -9,53 +9,31 @@ chrome.extension.sendMessage({}, function (response) {
 
 function init() {
   chrome.storage.onChanged.addListener(changes => {
-    const todos = changes['todos'].newValue || [];
-
-    renderButton(todos);
-    renderNavIcon(todos);
+    render(changes['todos'].newValue || []);
   });
-
-  let currentUrl = location.href;
-  let state = 0;
-
-  setInterval(() => {
-    switch (state) {
-      case 0:
-        if (currentUrl !== location.href) {
-          currentUrl = location.href;
-
-          if (/\/(pull|issues)\/\d+$/.exec(currentUrl)) {
-            state = 1;
-          }
-        }
-        break;
-      case 1:
-        if (!document.querySelector('.button-toggle-todo')) {
-          state = 2;
-        }
-        break;
-      case 2:
-        if (document.querySelector('#partial-users-participants')) {
-          state = 3;
-        }
-        break;
-
-      case 3:
-        chrome.storage.sync.get('todos', items => {
-          renderButton(items.todos || []);
-        });
-
-        state = 0;
-        break;
-    }
-  }, 100);
 
   chrome.storage.sync.get('todos', items => {
-    const todos = items.todos || [];
-
-    renderButton(todos);
-    renderNavIcon(todos);
+    render(items.todos || []);
   });
+
+  const target = document.querySelector('#js-repo-pjax-container');
+
+  if (!target) {
+    return;
+  }
+
+  const observer = new MutationObserver(function (mutations) {
+    chrome.storage.sync.get('todos', items => {
+      render(items.todos || []);
+    });
+  });
+
+  observer.observe(target, {childList: true});
+}
+
+function render(todos) {
+  renderButton(todos);
+  renderNavIcon(todos);
 }
 
 function renderButton(todos) {

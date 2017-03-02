@@ -9,7 +9,7 @@ chrome.extension.sendMessage({}, function (response) {
 
 function init() {
   chrome.storage.onChanged.addListener(changes => {
-    render(changes['todos'].newValue || []);
+    render(changes.todos.newValue || []);
   });
 
   chrome.storage.sync.get('todos', items => {
@@ -75,7 +75,7 @@ function renderButton(todos) {
 
 function renderNavIcon(todos) {
   const nav = document.querySelector('.header-nav.user-nav');
-  let layer = null;
+
   if (!nav) {
     return;
   }
@@ -86,14 +86,11 @@ function renderNavIcon(todos) {
     navItem = document.createElement('li');
     navItem.classList.add('header-nav-item');
     navItem.classList.add('header-nav-item-todo');
-    navItem.onclick = (e) => {
-      if (layer) {
-        layer.parentNode.removeChild(layer);
-        layer = null;
-      }
-      else layer = renderLayer();
+    navItem.onclick = e => {
+      renderPage();
       e.preventDefault();
     };
+
     nav.insertBefore(navItem, nav.childNodes[0]);
   }
 
@@ -106,45 +103,30 @@ function renderNavIcon(todos) {
   `;
 }
 
+function renderPage() {
+  const container = document.querySelector('#js-repo-pjax-container, #js-pjax-container');
 
-function renderLayer() {
-  const header = document.querySelector('.header');
-  const layer = document.createElement('div');
-  let content = null;
-  layer.style = {
-    'position': 'absolute',
-    'top': '54px',
-    'backgroundColor': '#24292e',
-    'zIndex': 999,
-    'padding': '0.3em',
-    'width': '100%'
-  };
-  chrome.storage.onChanged.addListener(function (changes, namespace) {
-    if (content) content.parentNode.removeChild(content);
-    content = renderLayerList(changes['todos'].newValue);
-    layer.appendChild(content);
+  chrome.storage.onChanged.addListener(function (changes) {
+    container.innerHTML = '';
+    container.appendChild(renderPageContent(changes.todos.newValue || []));
   });
+
   chrome.storage.sync.get('todos', items => {
-    const todos = items.todos || [];
-    if (todos.length === 0) {
-      content = document.createElement('p');
-      content.innerHTML = 'No ToDos.'
-    }
-    else {
-      content = renderLayerList(todos);
-    }
-    layer.appendChild(content);
+    container.innerHTML = '';
+    container.appendChild(renderPageContent(items.todos || []));
   });
-  header.appendChild(layer);
-
-  return layer;
 }
 
-function renderLayerList(todos) {
+function renderPageContent(todos) {
+
+  const wrapper = document.createElement('div');
+  wrapper.classList.add('container', 'page-content');
+
   const ul = document.createElement('ul');
   todos.map(function (todo) {
     const li = document.createElement('li');
     const removeBtn = document.createElement('button');
+
     removeBtn.onclick = () => {
       chrome.storage.sync.get('todos', items => {
         const todos = items.todos || [];
@@ -157,6 +139,7 @@ function renderLayerList(todos) {
         }
       });
     };
+
     removeBtn.classList.add('btn');
     removeBtn.classList.add('btn-sm');
     removeBtn.innerHTML = 'Done';
@@ -171,7 +154,10 @@ function renderLayerList(todos) {
     li.style.padding = '0.2em';
     ul.appendChild(li)
   });
-  return ul;
+
+  wrapper.appendChild(ul);
+
+  return wrapper;
 }
 
 function toggleTodo() {

@@ -9,7 +9,7 @@ chrome.extension.sendMessage({}, function (response) {
 
 function init() {
   chrome.storage.onChanged.addListener(changes => {
-    render(changes['todos'].newValue || []);
+    render(changes.todos.newValue || []);
   });
 
   chrome.storage.sync.get('todos', items => {
@@ -108,7 +108,7 @@ function renderPage() {
 
   chrome.storage.onChanged.addListener(function (changes) {
     container.innerHTML = '';
-    layer.appendChild(renderPageContent(changes['todos'].newValue));
+    container.appendChild(renderPageContent(changes.todos.newValue || []));
   });
 
   chrome.storage.sync.get('todos', items => {
@@ -126,6 +126,7 @@ function renderPageContent(todos) {
   todos.map(function (todo) {
     const li = document.createElement('li');
     const removeBtn = document.createElement('button');
+
     removeBtn.onclick = () => {
       chrome.storage.sync.get('todos', items => {
         const todos = items.todos || [];
@@ -138,6 +139,7 @@ function renderPageContent(todos) {
         }
       });
     };
+
     removeBtn.classList.add('btn');
     removeBtn.classList.add('btn-sm');
     removeBtn.innerHTML = 'Done';

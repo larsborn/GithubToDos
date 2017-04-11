@@ -168,9 +168,12 @@ function renderGroup(group, todos) {
   return element(
     'div',
     {
+      key: group,
       className: 'boxed-group flush'
     },
-    element('h3', {}, group),
+    element('h3', {}, 
+      element('a', {href: '/' + group}, group)
+    ),
     element('ul', { className: 'boxed-group-inner list-group notifications' }, list)
   );
 }

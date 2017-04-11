@@ -8,6 +8,10 @@ chrome.extension.sendMessage({}, function (response) {
 });
 
 function init() {
+  if (location.href.replace('https://github.com', '') === '/t0do') {
+    displayPage();
+  }
+
   chrome.storage.onChanged.addListener(changes => {
     display(changes.todos.newValue || []);
   });
@@ -75,7 +79,7 @@ function renderButton(exists) {
 
   const h3 = element('h3', {
     className: 'discussion-sidebar-heading'
-  }, 'ToDos')
+  }, 'ToDos');
 
   return element('div', {
     className: 'discussion-sidebar-item sidebar-notifications'
@@ -110,6 +114,7 @@ function renderNavIcon(todos) {
       className: 'header-nav-link notification-indicator tooltipped tooltipped-s js-notification-indicator',
       'aria-label': 'ToDos',
       onClick: e => {
+        history.pushState({}, 'GithubToDos', '/t0do');
         displayPage();
         e.preventDefault();
       }

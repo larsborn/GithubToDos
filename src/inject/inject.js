@@ -7,6 +7,9 @@ chrome.extension.sendMessage({}, function (response) {
   }, 10);
 });
 
+const TYPE_ISSUE = 'issue';
+const TYPE_PULL_REQUEST = 'pull_request'
+
 function init() {
   chrome.storage.onChanged.addListener(changes => {
     display(changes.todos.newValue || []);
@@ -52,7 +55,7 @@ function displayButton(todos) {
     sidebar.insertBefore(mount, document.getElementById('partial-users-participants'));
   }
 
-  const url = location.href;
+  const url = getCurrentUrl();
   const exists = todos.some(t => t.url === url);
 
   render(renderButton(exists), mount);
@@ -73,13 +76,9 @@ function renderButton(exists) {
     )
   );
 
-  const h3 = element('h3', {
-    className: 'discussion-sidebar-heading'
-  }, 'ToDos')
+  const h3 = element('h3', { className: 'discussion-sidebar-heading' }, 'ToDos');
 
-  return element('div', {
-    className: 'discussion-sidebar-item sidebar-notifications'
-  },
+  return element('div', { className: 'discussion-sidebar-item sidebar-notifications' },
     h3,
     button
   )
@@ -131,8 +130,10 @@ function displayPage() {
 }
 
 function renderPageContent(todos) {
+  const groups = groupBy(todos, 'project');
+
   return element('div', { className: 'container page-content' },
-    renderGroup('Todos', todos)
+    Object.keys(groups).map(group => renderGroup(group, groups[group]))
   );
 }
 
@@ -142,6 +143,7 @@ function renderGroup(group, todos) {
 
     return element('li', { className: 'list-group-item js-notification js-navigation-item unread issue-notification', key: todo.url },
       element('span', { className: 'list-group-item-name css-truncate' },
+        todo.type == TYPE_ISSUE ? renderIssueSvg() : renderPullRequestSvg(),
         element('a', {
           className: 'css-truncate-target js-notification-target js-navigation-open list-group-item-link',
           href: todo.url,
@@ -149,51 +151,12 @@ function renderGroup(group, todos) {
         }, todo.title)),
       element('ul', { className: 'notification-actions' },
         element('li', { className: 'delete' },
-          element('button', { className: 'btn-link delete-note tooltipped tooltipped-w', onClick: () => removeTodo(todo) },
+          element('button', { className: 'btn-link delete-note tooltipped tooltipped-w', 'aria-label': 'Check of a todo', onClick: () => removeTodo(todo) },
             renderDoneSvg()
           )
         )
       )
     );
-
-    /*
- <li class="list-group-item js-notification js-navigation-item unread issue-notification">
-            <span class="list-group-item-name css-truncate">
-              <svg aria-label="issues" class="octicon octicon-issue-closed type-icon type-icon-state-closed" height="16" role="img" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M7 10h2v2H7v-2zm2-6H7v5h2V4zm1.5 1.5l-1 1L12 9l4-4.5-1-1L12 7l-1.5-1.5zM8 13.7A5.71 5.71 0 0 1 2.3 8c0-3.14 2.56-5.7 5.7-5.7 1.83 0 3.45.88 4.5 2.2l.92-.92A6.947 6.947 0 0 0 8 1C4.14 1 1 4.14 1 8s3.14 7 7 7 7-3.14 7-7l-1.52 1.52c-.66 2.41-2.86 4.19-5.48 4.19v-.01z" /></svg>
-              <a class="css-truncate-target js-notification-target js-navigation-open list-group-item-link" href="https://github.com/larsborn/GithubToDos/issues/1" title="Publish on Chrome Web Store">
-                Publish on Chrome Web Store
-      </a>
-            </span>
-  
-            <ul class="notification-actions">
-              <li class="delete">
-                <!-- '"` --><!-- </textarea></xmp> --></option></form><form accept-charset="UTF-8" action="/larsborn/GithubToDos/notifications/mark?ids=205247728" class="js-delete-notification" data-remote="true" method="post"><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="&#x2713;" /><input name="authenticity_token" type="hidden" value="Q7+OwUQlA6Ig/A5lzTljniFfre7nM9iXclEYSuCHwmOs7dlIc31dgpzTHqZbq09HvVXTsmoM+ks8Jcv/ClhpOg==" /></div>
-          <button type="submit" aria-label="Mark as read" class="btn-link delete-note tooltipped tooltipped-w">
-            <svg aria-hidden="true" class="octicon octicon-check" height="16" version="1.1" viewBox="0 0 12 16" width="12"><path fill-rule="evenodd" d="M12 5l-8 8-4-4 1.5-1.5L4 10l6.5-6.5z" /></svg>
-          </button>
-        </form>    </li >
-  
-          <li class="mute ">
-            <!-- '"` --><!-- </textarea></xmp > --></option ></form > <form accept-charset="UTF-8" action="/notifications/mute?id=205247728" class="js-mute-notification" data-remote="true" method="post"><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="&#x2713;" /><input name="authenticity_token" type="hidden" value="lAgK8xlV0VcPt9+PPHeFKutmNIDjv24a8bUOMSY0Yi2k88RTsVbNi3uq6YmRx2uqCKGhkjdDY2elYpy3y9b4Ow==" /></div>
-              <button type="submit" aria-label="Unsubscribe from this thread" class="btn-link mute-note tooltipped tooltipped-w">
-                <svg aria-hidden="true" class="octicon octicon-mute" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M8 2.81v10.38c0 .67-.81 1-1.28.53L3 10H1c-.55 0-1-.45-1-1V7c0-.55.45-1 1-1h2l3.72-3.72C7.19 1.81 8 2.14 8 2.81zm7.53 3.22l-1.06-1.06-1.97 1.97-1.97-1.97-1.06 1.06L11.44 8 9.47 9.97l1.06 1.06 1.97-1.97 1.97 1.97 1.06-1.06L13.56 8l1.97-1.97z" /></svg>
-              </button>
-            </form>    </li >
-  
-              <li class="unmute">
-                <!-- '"` --><!-- </textarea></xmp > --></option ></form > <form accept-charset="UTF-8" action="/notifications/unmute?id=205247728" class="js-unmute-notification" data-remote="true" method="post"><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="&#x2713;" /><input name="authenticity_token" type="hidden" value="OcmCjwrD3A1SbTmf0IjRjsOQ65ijpZjwjSl4ln79G1o7BnFEuwZ0SMFrQ2r1bXAtoqzeO3wadS/mwKgPACb8qw==" /></div>
-                  <button type="submit" aria-label="Subscribe to this thread" class="btn-link mute-note tooltipped tooltipped-w">
-                    <svg aria-hidden="true" class="octicon octicon-unmute" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M12 8.02c0 1.09-.45 2.09-1.17 2.83l-.67-.67c.55-.56.89-1.31.89-2.16 0-.85-.34-1.61-.89-2.16l.67-.67A3.99 3.99 0 0 1 12 8.02zM7.72 2.28L4 6H2c-.55 0-1 .45-1 1v2c0 .55.45 1 1 1h2l3.72 3.72c.47.47 1.28.14 1.28-.53V2.81c0-.67-.81-1-1.28-.53zm5.94.08l-.67.67a6.996 6.996 0 0 1 2.06 4.98c0 1.94-.78 3.7-2.06 4.98l.67.67A7.973 7.973 0 0 0 16 8c0-2.22-.89-4.22-2.34-5.66v.02zm-1.41 1.41l-.69.67a5.05 5.05 0 0 1 1.48 3.58c0 1.39-.56 2.66-1.48 3.56l.69.67A5.971 5.971 0 0 0 14 8.02c0-1.65-.67-3.16-1.75-4.25z" /></svg>
-                  </button>
-                </form>    </li >
-                  <li class="age"><relative-time datetime="2017-04-11T17:51:58Z">Apr 11, 2017</relative-time></li>
-                  <li class="tooltipped tooltipped-s" aria-label="larsborn"><div class="avatar-stack clearfix"><img alt="@larsborn" class="avatar from-avatar" height="39" src="https://avatars2.githubusercontent.com/u/1826897?v=3&amp;s=78" width="39" /></div></li>
-    </ul >
-  </li >
-
-    */
-
-
   });
 
   return element(
@@ -204,28 +167,6 @@ function renderGroup(group, todos) {
     element('h3', {}, group),
     element('ul', { className: 'boxed-group-inner list-group notifications' }, list)
   );
-
-  /*
-  
-    <div class="boxed-group flush js-notifications-browser">
-      <!-- '"` --><!-- </textarea></xmp > --></option ></form > <form accept-charset="UTF-8" action="/notifications/mark" class="boxed-group-action js-mark-visible-as-read" data-remote="true" method="post"><div style="margin:0;padding:0;display:inline"><input name="utf8" type="hidden" value="&#x2713;" /><input name="authenticity_token" type="hidden" value="Lk/cpXR3Zek6cwH56CrtsOrpFdyQuv2U2L727ESlBwyIOuxuRGzuN1q4tYn4fLZqIVVy++k2IlLHzpB+TzieMA==" /></div>            <input class="form-control" name="ids[]" type="hidden" value="205247728" />
-        <p class="text-green">Marked <strong>1 notification</strong> as read.</p>
-  
-        <button type="submit" class="mark-all-as-read css-truncate tooltipped tooltipped-w" aria-label="Mark all GithubToDos notifications as read">
-          <svg aria-hidden="true" class="octicon octicon-check" height="16" version="1.1" viewBox="0 0 12 16" width="12"><path fill-rule="evenodd" d="M12 5l-8 8-4-4 1.5-1.5L4 10l6.5-6.5z" /></svg>
-        </button>
-      </form> <h3>
-        <a href="/larsborn/GithubToDos" class="css-truncate css-truncate-target notifications-repo-link" title="larsborn/GithubToDos">larsborn/GithubToDos</a>
-      </h3>
-        <ul class="boxed-group-inner list-group notifications">
-  
-        
-            
-          </ul >
-        </div >
-  
-  */
-
 }
 
 
@@ -260,7 +201,35 @@ function renderDoneSvg() {
   );
 }
 
+function renderIssueSvg() {
+  return element('svg', {
+    className: 'octicon octicon-issue-opened type-icon type-icon-state-open',
+    viewBox: '0 0 14 16',
+    version: '1.1',
+    width: 14,
+    height: 16
+  },
+    element('path', {
+      fillRule: 'evenodd',
+      d: 'M7 2.3c3.14 0 5.7 2.56 5.7 5.7s-2.56 5.7-5.7 5.7A5.71 5.71 0 0 1 1.3 8c0-3.14 2.56-5.7 5.7-5.7zM7 1C3.14 1 0 4.14 0 8s3.14 7 7 7 7-3.14 7-7-3.14-7-7-7zm1 3H6v5h2V4zm0 6H6v2h2v-2z'
+    })
+  );
+}
 
+function renderPullRequestSvg() {
+  return element('svg', {
+    className: 'octicon octicon-git-pull-request type-icon type-icon-state-open',
+    viewBox: '0 0 12 16',
+    version: '1.1',
+    width: 12,
+    height: 16
+  },
+    element('path', {
+      fillRule: 'evenodd',
+      d: 'M11 11.28V5c-.03-.78-.34-1.47-.94-2.06C9.46 2.35 8.78 2.03 8 2H7V0L4 3l3 3V4h1c.27.02.48.11.69.31.21.2.3.42.31.69v6.28A1.993 1.993 0 0 0 10 15a1.993 1.993 0 0 0 1-3.72zm-1 2.92c-.66 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zM4 3c0-1.11-.89-2-2-2a1.993 1.993 0 0 0-1 3.72v6.56A1.993 1.993 0 0 0 2 15a1.993 1.993 0 0 0 1-3.72V4.72c.59-.34 1-.98 1-1.72zm-.8 10c0 .66-.55 1.2-1.2 1.2-.65 0-1.2-.55-1.2-1.2 0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2zM2 4.2C1.34 4.2.8 3.65.8 3c0-.65.55-1.2 1.2-1.2.65 0 1.2.55 1.2 1.2 0 .65-.55 1.2-1.2 1.2zz'
+    })
+  );
+}
 
 
 
@@ -320,7 +289,7 @@ function extractTodoInformation() {
     title: extractTitle(),
     project: extractProject(),
     participants: extractParticipants(),
-    url: location.href
+    url: getCurrentUrl()
   };
 }
 
@@ -335,8 +304,8 @@ function extractProject() {
 
 function extractType() {
   const selectedMenuItemText = document.querySelector('.reponav .selected').textContent.trim();
-  if (selectedMenuItemText.indexOf('Issues') !== -1) return 'Issue';
-  if (selectedMenuItemText.indexOf('Pull requests') !== -1) return 'Pull Request';
+  if (selectedMenuItemText.indexOf('Issues') !== -1) return TYPE_ISSUE;
+  if (selectedMenuItemText.indexOf('Pull requests') !== -1) return TYPE_PULL_REQUEST;
   return null
 }
 
@@ -368,3 +337,14 @@ function element(type, props, ...children) {
 function render(element, mountNode) {
   return ReactDOM.render(element, mountNode);
 }
+
+function getCurrentUrl() {
+  return location.href.split('#')[0];
+}
+
+function groupBy(xs, key) {
+  return xs.reduce(function (rv, x) {
+    (rv[x[key]] = rv[x[key]] || []).push(x);
+    return rv;
+  }, {});
+};

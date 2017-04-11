@@ -53,9 +53,9 @@ function displayButton(todos) {
   }
 
   const url = location.href;
-  const index = todos.indexOf(url);
+  const exists = todos.some(t => t.url === url);
 
-  render(renderButton(index === -1), mount);
+  render(renderButton(exists), mount);
 }
 
 function renderButton(exists) {
@@ -64,10 +64,12 @@ function renderButton(exists) {
   },
     element('button', {
       className: 'btn btn-sm button-toggle-todo',
-      onClick: toggleTodo
+      onClick: () => {
+        toggleTodo(extractTodoInformation());
+      }
     },
       renderSvg(),
-      exists ? ' Add ToDo' : ' Remove ToDo'
+      exists ? ' Remove ToDo' : ' Add ToDo'
     )
   );
 
@@ -137,16 +139,7 @@ function renderPageContent(todos) {
       {
         className: 'btn btn-sm',
         onClick: () => {
-          chrome.storage.sync.get('todos', items => {
-            const todos = items.todos || [];
-            const pos = todos.indexOf(todo);
-            if (pos != -1) {
-              todos.splice(pos, 1);
-              chrome.storage.sync.set({
-                'todos': todos
-              });
-            }
-          })
+          removeTodo(todo);
         }
       },
       'Done'
@@ -157,16 +150,16 @@ function renderPageContent(todos) {
       {
         style: {
           paddingLeft: '0.5em',
-          href: todo
+          href: todo.url
         }
       },
-      todo.replace('https://github.com/', '')
+      todo.url.replace('https://github.com/', '')
     );
 
     return element(
       'li',
       {
-        key: todo,
+        key: todo.url,
         style: { padding: '0.2em' }
       },
       link,
@@ -183,24 +176,6 @@ function renderPageContent(todos) {
   );
 }
 
-function toggleTodo() {
-  chrome.storage.sync.get('todos', items => {
-    const todos = items.todos || [];
-    const url = location.href;
-    const index = todos.indexOf(url);
-
-    if (index === -1) {
-      todos.push(url);
-    } else {
-      todos.splice(index, 1);
-    }
-
-    chrome.storage.sync.set({
-      'todos': todos
-    });
-  });
-}
-
 function renderSvg() {
   return element('svg', {
     className: 'octicon octicon-checklist',
@@ -215,6 +190,65 @@ function renderSvg() {
     })
   );
 }
+
+/* Todo Commands */
+function toggleTodo(todo) {
+  chrome.storage.sync.get('todos', items => {
+    const todos = items.todos || [];
+    const index = todos.findIndex(t => t.url === todo.url);
+
+    if (index === -1) {
+      todos.push(todo);
+    } else {
+      todos.splice(index, 1);
+    }
+
+    chrome.storage.sync.set({
+      'todos': todos
+    });
+  });
+}
+
+function addTodo(todo) {
+  chrome.storage.sync.get('todos', items => {
+    const todos = items.todos || [];
+    todos.push(todo);
+
+    chrome.storage.sync.set({
+      'todos': todos
+    });
+  });
+}
+
+function removeTodo(todo) {
+  chrome.storage.sync.get('todos', items => {
+    const todos = items.todos || [];
+
+    const index = todos.findIndex(t => t.url === todo.url);
+
+    if (index === -1) {
+      return;
+    }
+
+    todos.splice(index, 1);
+
+    chrome.storage.sync.set({
+      'todos': todos
+    });
+  });
+}
+
+/* extract informations */
+
+function extractTodoInformation() {
+  return {
+    type: null,
+    title: null,
+    project: null,
+    url: location.href
+  };
+}
+
 
 /* helper functions */
 

@@ -242,13 +242,49 @@ function removeTodo(todo) {
 
 function extractTodoInformation() {
   return {
-    type: null,
-    title: null,
-    project: null,
+    createdAt: getCurrentTimestamp(),
+    type: extractType(),
+    title: extractTitle(),
+    project: extractProject(),
+    participants: extractParticipants(),
     url: location.href
   };
 }
 
+function extractTitle() {
+  const titles = document.getElementsByClassName('js-issue-title');
+  return titles.length === 1 ? titles[0].textContent.trim() : null;
+}
+
+function extractProject() {
+  return location.href.replace('https://github.com/', '').split('/').slice(0, 2).join('/');
+}
+
+function extractType() {
+  const selectedMenuItemText = document.querySelector('.reponav .selected').textContent.trim();
+  if (selectedMenuItemText.indexOf('Issues') !== -1) return 'Issue';
+  if (selectedMenuItemText.indexOf('Pull requests') !== -1) return 'Pull Request';
+  return null
+}
+
+function extractParticipants() {
+  return Array.prototype.map.call(document.getElementsByClassName('participant-avatar'), elem => {
+    return {
+      href: elem.href,
+      src: elem.children[0].src,
+    };
+  });
+}
+
+function getCurrentTimestamp() {
+  const now = new Date();
+  return now.getFullYear()
+    + "-" + ("0" + (now.getMonth() + 1)).slice(-2)
+    + "-" + ("0" + now.getDate()).slice(-2)
+    + " " + ("0" + now.getHours()).slice(-2)
+    + ":" + ("0" + now.getMinutes()).slice(-2)
+    + ":" + ("0" + now.getSeconds()).slice(-2);
+}
 
 /* helper functions */
 
@@ -257,5 +293,5 @@ function element(type, props, ...children) {
 }
 
 function render(element, mountNode) {
-  return ReactDOM.render(element, mountNode);;
+  return ReactDOM.render(element, mountNode);
 }

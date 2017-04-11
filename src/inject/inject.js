@@ -136,6 +136,18 @@ function displayPage() {
 }
 
 function renderPageContent(todos) {
+
+  if (todos.length === 0) {
+    return element('div', { style: { padding: '50px' } },
+      element('div', { className: 'blankslate blankslate-spacious blankslate-large' },
+        renderTodoSvg(),
+        element('h3', {}, 'No todos'),
+        element('p', {}, 'Good work!')
+      )
+    );
+  }
+
+
   const groups = groupBy(todos, 'project');
 
   return element('div', { className: 'container page-content' },
@@ -177,8 +189,6 @@ function renderGroup(group, todos) {
     element('ul', { className: 'boxed-group-inner list-group notifications' }, list)
   );
 }
-
-
 
 function renderTodoSvg() {
   return element('svg', {

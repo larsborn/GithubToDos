@@ -10,12 +10,6 @@
     "128": "icons/icon128.png"
   },
   "default_locale": "en",
-  "background": {
-    "scripts": [
-      "src/bg/background.js"
-    ],
-    "persistent": true
-  },
   "permissions": [
     "storage",
     "https://github.com/*"
@@ -34,6 +28,8 @@
         "https://github.com/*"
       ],
       "js": [
+        "vendor/react.js",
+        "vendor/react-dom.js",
         "src/inject/inject.js"
       ]
     }

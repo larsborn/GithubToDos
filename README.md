@@ -23,3 +23,9 @@ and install the extension as usual.
 * @larsborn
 
 Feel free to open an issue or shoot us a message!
+
+## Version History
+
+* 0.1: prototype
+* 1.0: first release
+* 1.1: show message, if no todos are on the list

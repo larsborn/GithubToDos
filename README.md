@@ -9,8 +9,9 @@ it should most probably not destroy your computer).
 
 ## Installation
 
-Please follow instructions under "Developer Installation" until we published the extension on the Chrome Web Store 
-(Issue #1). 
+Go to
+[GithubToDos on the Webstore](https://chrome.google.com/webstore/detail/githubtodos/pmpgbamabobooepceaoifhhdbibmcind) 
+and install the extension as usual.
 
 ## Developer Installation
 

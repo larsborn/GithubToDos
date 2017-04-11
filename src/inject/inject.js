@@ -11,6 +11,10 @@ const TYPE_ISSUE = 'issue';
 const TYPE_PULL_REQUEST = 'pull_request'
 
 function init() {
+  if (location.href.replace('https://github.com', '') === '/t0do') {
+    displayPage();
+  }
+
   chrome.storage.onChanged.addListener(changes => {
     display(changes.todos.newValue || []);
   });
@@ -105,14 +109,16 @@ function displayNavIcon(todos) {
 
 function renderNavIcon(todos) {
   return element('a', {
-    href: '#todos',
-    className: 'header-nav-link notification-indicator tooltipped tooltipped-s js-notification-indicator',
-    onClick: e => {
-      displayPage();
-      e.preventDefault();
-    }
-  },
-    todos.length > 0 ? element('span', { className: 'mail-status unread' }) : null,
+      href: '#todos',
+      className: 'header-nav-link notification-indicator tooltipped tooltipped-s js-notification-indicator',
+      'aria-label': 'ToDos',
+      onClick: e => {
+        history.pushState({}, 'GithubToDos', '/t0do');
+        displayPage();
+        e.preventDefault();
+      }
+    },
+    todos.length > 0 ? element('span', {className: 'mail-status unread'}) : null,
     renderTodoSvg()
   );
 }
@@ -280,7 +286,7 @@ function removeTodo(todo) {
   });
 }
 
-/* extract informations */
+/* extract information */
 
 function extractTodoInformation() {
   return {
@@ -321,11 +327,11 @@ function extractParticipants() {
 function getCurrentTimestamp() {
   const now = new Date();
   return now.getFullYear()
-    + "-" + ("0" + (now.getMonth() + 1)).slice(-2)
-    + "-" + ("0" + now.getDate()).slice(-2)
-    + " " + ("0" + now.getHours()).slice(-2)
-    + ":" + ("0" + now.getMinutes()).slice(-2)
-    + ":" + ("0" + now.getSeconds()).slice(-2);
+    + '-' + ('0' + (now.getMonth() + 1)).slice(-2)
+    + '-' + ('0' + now.getDate()).slice(-2)
+    + ' ' + ('0' + now.getHours()).slice(-2)
+    + ':' + ('0' + now.getMinutes()).slice(-2)
+    + ':' + ('0' + now.getSeconds()).slice(-2);
 }
 
 /* helper functions */
